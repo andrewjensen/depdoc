@@ -1,3 +1,4 @@
+use clap::{Parser, Subcommand};
 use glob::glob;
 use std::collections::HashMap;
 use std::fs;
@@ -14,8 +15,58 @@ use crate::graph::{Edge, Graph, Node, NodeType};
 use crate::imports::{resolve_imports, ResolvedImport};
 use crate::parse::extract_imports;
 
+#[derive(Parser, Debug)]
+#[command(version, about, long_about = None)]
+struct Cli {
+    #[command(subcommand)]
+    command: Option<Commands>,
+}
+
+#[derive(Subcommand, Debug)]
+enum Commands {
+    /// Generate static files to publish
+    Generate {
+        /// Location of the config file
+        #[arg(short, long)]
+        config: String,
+    },
+    /// Generate and serve files
+    Serve {
+        /// Location of the config file
+        #[arg(short, long)]
+        config: String,
+    },
+}
+
 fn main() {
-    let config = read_config_file("depdoc.config.yaml").unwrap();
+    let cli = Cli::parse();
+
+    match cli.command {
+        Some(Commands::Generate { config }) => {
+            let graph = generate_graph(&config);
+
+            println!("Saving graph to JSON...");
+            let graph_json = serde_json::to_string_pretty(&graph).unwrap();
+            let cwd = std::env::current_dir().unwrap();
+            let output_path = cwd.join("graph.json");
+            fs::write(output_path, graph_json).unwrap();
+
+            println!("Done!");
+        }
+        Some(Commands::Serve { config: _ }) => {
+            panic!("Not implemented yet");
+        }
+        None => {
+            println!("No command provided");
+            std::process::exit(1);
+        }
+    }
+}
+
+fn generate_graph(config_location: &str) -> Graph {
+    println!("Config location: {}", config_location);
+
+    let config = read_config_file(config_location).unwrap();
 
     println!("Finding source paths...");
     let paths = get_source_paths(&config.path);
@@ -74,14 +125,9 @@ fn main() {
     }
     println!("Found {} edges between modules.", edges.len());
 
-    println!("Saving graph to JSON...");
     let graph = Graph { nodes, edges };
-    let graph_json = serde_json::to_string_pretty(&graph).unwrap();
-    let cwd = std::env::current_dir().unwrap();
-    let output_path = cwd.join("graph.json");
-    fs::write(output_path, graph_json).unwrap();
 
-    println!("Done!");
+    graph
 }
 
 fn get_source_paths(root_directory: &str) -> Vec<PathBuf> {
