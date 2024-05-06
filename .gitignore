@@ -1,1 +1,5 @@
 /target
+
+/viewer/dist/
+/viewer/node_modules/
+/viewer/.parcel-cache/
