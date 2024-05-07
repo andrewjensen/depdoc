@@ -12,12 +12,17 @@ import ReactFlow, {
 
 import { useViewerStore } from "./viewerStore";
 import ModuleSearch from "./ModuleSearch";
+import InternalModuleNode from "./InternalModuleNode";
 
 import "reactflow/dist/style.css";
 
 type ViewerProps = {
   nodes: Node[];
   edges: Edge[];
+};
+
+const NODE_TYPES = {
+  internalModule: InternalModuleNode,
 };
 
 export default function Viewer({ nodes, edges }: ViewerProps) {
@@ -37,6 +42,7 @@ export default function Viewer({ nodes, edges }: ViewerProps) {
   return (
     <div className="w-full h-full">
       <ReactFlow
+        nodeTypes={NODE_TYPES}
         nodes={nodes}
         edges={edges}
         onNodesChange={onNodesChange}

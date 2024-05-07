@@ -101,6 +101,7 @@ export const useViewerStore = create<ViewerState>()(
 function makeVisibleNode(nodeMeta: NodeMeta): Node {
   return {
     id: nodeMeta.id,
+    type: "internalModule",
     position: {
       x: 20,
       y: 20,
