@@ -8,6 +8,15 @@ pub struct Config {
     pub title: String,
     pub language: String,
     pub path: String,
+
+    #[serde(rename = "moduleResolution")]
+    pub module_resolution: Option<Vec<ModuleResolutionItem>>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct ModuleResolutionItem {
+    pub pattern: String,
+    pub replacement: String,
 }
 
 pub fn read_config_file(file_path: &str) -> Result<Config, Box<dyn std::error::Error>> {

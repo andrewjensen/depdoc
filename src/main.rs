@@ -89,7 +89,7 @@ fn generate_graph(config_location: &str) -> Graph {
 
     let nodes_by_path: HashMap<String, &Node> = nodes
         .iter()
-        .map(|node| (node.path_absolute.clone(), node))
+        .map(|node| (node.path_relative.clone(), node))
         .collect();
 
     println!("Extracting imports from files...");
@@ -99,7 +99,12 @@ fn generate_graph(config_location: &str) -> Graph {
         let contents = fs::read_to_string(&node.path_absolute).unwrap();
         let unresolved_imports = extract_imports(&contents);
 
-        let resolved_imports = resolve_imports(unresolved_imports, &node, &nodes_by_path);
+        let resolved_imports = resolve_imports(
+            unresolved_imports,
+            &node,
+            &nodes_by_path,
+            &config.module_resolution,
+        );
 
         let import_edges: Vec<Edge> = resolved_imports
             .iter()
