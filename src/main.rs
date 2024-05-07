@@ -12,7 +12,7 @@ mod parse;
 
 use crate::config::read_config_file;
 use crate::graph::{Edge, Graph, Node, NodeType};
-use crate::imports::{resolve_imports, ResolvedImport};
+use crate::imports::{resolve_import, ResolvedImport};
 use crate::parse::extract_imports;
 
 #[derive(Parser, Debug)]
@@ -99,12 +99,10 @@ fn generate_graph(config_location: &str) -> Graph {
         let contents = fs::read_to_string(&node.path_absolute).unwrap();
         let unresolved_imports = extract_imports(&contents);
 
-        let resolved_imports = resolve_imports(
-            unresolved_imports,
-            &node,
-            &nodes_by_path,
-            &config.module_resolution,
-        );
+        let resolved_imports: Vec<ResolvedImport> = unresolved_imports
+            .into_iter()
+            .map(|import| resolve_import(import, &node, &nodes_by_path, &config.module_resolution))
+            .collect();
 
         let import_edges: Vec<Edge> = resolved_imports
             .iter()
