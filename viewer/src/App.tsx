@@ -23,7 +23,7 @@ export default function App() {
 
   return (
     <div className="w-full h-full flex flex-col">
-      <Header />
+      <Header title={state.completeGraph.title} />
       <main className="flex-1">
         <Viewer nodes={state.visibleNodes} edges={state.visibleEdges} />
       </main>
@@ -31,6 +31,10 @@ export default function App() {
   );
 }
 
-function Header() {
-  return <header className="text-3xl bg-black text-white p-8">My Repo</header>;
+type HeaderProps = {
+  title: string;
+};
+
+function Header({ title }: HeaderProps) {
+  return <header className="text-3xl bg-black text-white p-8">{title}</header>;
 }

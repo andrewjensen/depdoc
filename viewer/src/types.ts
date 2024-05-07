@@ -1,4 +1,5 @@
 export type Graph = {
+  title: string;
   nodes: NodeMeta[];
   edges: EdgeMeta[];
 };

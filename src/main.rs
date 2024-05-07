@@ -126,7 +126,11 @@ fn generate_graph(config_location: &str) -> Graph {
     }
     println!("Found {} edges between modules.", edges.len());
 
-    let graph = Graph { nodes, edges };
+    let graph = Graph {
+        title: config.title,
+        nodes,
+        edges,
+    };
 
     graph
 }

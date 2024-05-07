@@ -16,7 +16,7 @@ export type ViewerState = {
 
 export const useViewerStore = create<ViewerState>()(
   devtools((set) => ({
-    completeGraph: { nodes: [], edges: [] },
+    completeGraph: { title: "", nodes: [], edges: [] },
     visibleNodes: [],
     visibleEdges: [],
     setGraphData: (graph: Graph) => {

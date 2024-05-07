@@ -5,6 +5,7 @@ use std::path::Path;
 
 #[derive(Debug, Deserialize)]
 pub struct Config {
+    pub title: String,
     pub language: String,
     pub path: String,
 }

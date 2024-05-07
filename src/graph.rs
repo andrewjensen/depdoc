@@ -2,6 +2,7 @@ use serde::Serialize;
 
 #[derive(Serialize)]
 pub struct Graph {
+    pub title: String,
     pub nodes: Vec<Node>,
     pub edges: Vec<Edge>,
 }
