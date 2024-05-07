@@ -35,12 +35,52 @@ export const useViewerStore = create<ViewerState>()(
           (visibleNode) => visibleNode.id === id,
         );
 
-        if (!isAlreadyVisible) {
-          const addedNode = makeVisibleNode(node);
-          return { visibleNodes: [...state.visibleNodes, addedNode] };
-        } else {
+        if (isAlreadyVisible) {
           return {};
         }
+
+        const addedNode = makeVisibleNode(node);
+
+        const currentEdgeIds: Set<string> = new Set(
+          state.visibleEdges.map((edge) => edge.id),
+        );
+
+        const edgesByIds: Record<string, EdgeMeta> = {};
+        for (let edge of state.completeGraph.edges) {
+          // TODO: create this data structure at the beginning, not every time
+          const edgeId = edge.id;
+          edgesByIds[edgeId] = edge;
+        }
+
+        const currentNodeIds: Set<string> = new Set(
+          state.visibleNodes.map((node) => node.id),
+        );
+
+        const nodesByIds: Record<string, NodeMeta> = {};
+        for (let node of state.completeGraph.nodes) {
+          nodesByIds[node.id] = node;
+        }
+
+        const addedEdges: Edge[] = [];
+        for (let edgeMeta of state.completeGraph.edges) {
+          if (
+            !currentEdgeIds.has(edgeMeta.id) &&
+            ((edgeMeta.source_id === id &&
+              currentNodeIds.has(edgeMeta.target_id)) ||
+              (edgeMeta.target_id === id &&
+                currentNodeIds.has(edgeMeta.source_id)))
+          ) {
+            // This edge isn't already visible,
+            // and it connects from an existing node to the new one
+            const newEdge = makeVisibleEdge(edgeMeta);
+            addedEdges.push(newEdge);
+          }
+        }
+
+        return {
+          visibleNodes: [...state.visibleNodes, addedNode],
+          visibleEdges: [...state.visibleEdges, ...addedEdges],
+        };
       });
     },
     dragNode: (id: string, position: XYPosition) => {
@@ -73,12 +113,14 @@ function makeVisibleNode(nodeMeta: NodeMeta): Node {
 
 function makeVisibleEdge(edgeMeta: EdgeMeta): Edge {
   return {
-    id: `${edgeMeta.source_id}-${edgeMeta.target_id}`,
+    id: edgeMeta.id,
     source: edgeMeta.source_id,
     target: edgeMeta.target_id,
-    type: "smoothstep",
+    type: "default",
     markerEnd: {
       type: MarkerType.ArrowClosed,
+      width: 20,
+      height: 16,
     },
   };
 }

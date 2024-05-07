@@ -12,6 +12,7 @@ export type NodeMeta = {
 };
 
 export type EdgeMeta = {
+  id: string;
   source_id: string;
   target_id: string;
 };

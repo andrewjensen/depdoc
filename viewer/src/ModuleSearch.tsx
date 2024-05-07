@@ -14,8 +14,9 @@ export default function ModuleSearch() {
     if (e.target.value === "") {
       setResults([]);
     } else {
+      const lowercaseSearchTerm = e.target.value.toLowerCase();
       const searchResults = nodes.filter((node) =>
-        node.path_relative.includes(e.target.value),
+        node.path_relative.toLowerCase().includes(lowercaseSearchTerm),
       );
       setResults(searchResults);
     }
