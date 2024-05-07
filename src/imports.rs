@@ -40,6 +40,7 @@ pub fn resolve_imports(
             }
         }
 
+        let mut found_resolution = false;
         if let Some(module_resolution) = module_resolution {
             for resolution_item in module_resolution.iter() {
                 if unresolved_import
@@ -54,16 +55,19 @@ pub fn resolve_imports(
 
                     if let Some(resolved_import) = resolved_import {
                         resolved_imports.push(resolved_import);
-                        continue;
+                        found_resolution = true;
+                        break;
                     }
                 }
             }
         }
 
-        let resolved_import = ResolvedImport::ExternalImport {
-            target_module_name: unresolved_import.module_name,
-        };
-        resolved_imports.push(resolved_import);
+        if !found_resolution {
+            let resolved_import = ResolvedImport::ExternalImport {
+                target_module_name: unresolved_import.module_name,
+            };
+            resolved_imports.push(resolved_import);
+        }
     }
 
     resolved_imports
@@ -125,12 +129,11 @@ fn resolve_resolution_with_substitution(
     let relative_path = unresolved_import
         .module_name
         .replace(&resolution_item.pattern, &resolution_item.replacement);
-    println!("Relative path: {}", relative_path);
 
     let candidates = create_file_path_candidates(&relative_path);
     for candidate in candidates.iter() {
         let target_path = candidate.to_str().unwrap().to_string();
-        println!("Checking candidate: {}", target_path);
+
         match nodes_by_path.get(&target_path) {
             Some(target_node) => {
                 let resolved_import = ResolvedImport::InternalImport {
@@ -324,6 +327,52 @@ mod test {
             resolved_imports,
             vec![ResolvedImport::ExternalImport {
                 target_module_name: "react".to_string(),
+            }]
+        );
+    }
+
+    #[test]
+    fn resolve_imports_with_substitution() {
+        let source_node = Node {
+            id: "7c00c281-b165-4ccd-9deb-3575a0d7e71d".to_string(),
+            node_type: NodeType::Internal,
+            label: "test".to_string(),
+            path_absolute: "/path/to/repo/feature-a/subfeature/myFile.tsx".to_string(),
+            path_relative: "feature-a/subfeature/myFile.tsx".to_string(),
+        };
+
+        let target_node = Node {
+            id: "c319b51d-2f58-41aa-96f5-fbe35bb227b4".to_string(),
+            node_type: NodeType::Internal,
+            label: "test".to_string(),
+            path_absolute: "/path/to/repo/app/common/myCommonFile.tsx".to_string(),
+            path_relative: "app/common/myCommonFile.tsx".to_string(),
+        };
+
+        let mut nodes_by_path = HashMap::new();
+        nodes_by_path.insert(source_node.path_relative.clone(), &source_node);
+        nodes_by_path.insert(target_node.path_relative.clone(), &target_node);
+
+        let unresolved_imports = vec![UnresolvedImport {
+            module_name: "~/common/myCommonFile".to_string(),
+        }];
+
+        let module_resolution = Some(vec![ModuleResolutionItem {
+            pattern: "~/".to_string(),
+            replacement: "app/".to_string(),
+        }]);
+
+        let resolved_imports = resolve_imports(
+            unresolved_imports,
+            &source_node,
+            &nodes_by_path,
+            &module_resolution,
+        );
+        assert_eq!(
+            resolved_imports,
+            vec![ResolvedImport::InternalImport {
+                target_path: "app/common/myCommonFile.tsx".to_string(),
+                target_node_id: "c319b51d-2f58-41aa-96f5-fbe35bb227b4".to_string()
             }]
         );
     }
