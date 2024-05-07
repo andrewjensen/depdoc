@@ -109,6 +109,7 @@ fn generate_graph(config_location: &str) -> Graph {
                         target_path: _,
                         target_node_id,
                     } => Some(Edge {
+                        id: Uuid::new_v4().to_string(),
                         source_id: node.id.clone(),
                         target_id: target_node_id.clone(),
                     }),

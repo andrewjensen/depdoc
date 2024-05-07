@@ -23,6 +23,7 @@ pub enum NodeType {
 
 #[derive(Serialize, Debug)]
 pub struct Edge {
+    pub id: String,
     pub source_id: String,
     pub target_id: String,
 }
