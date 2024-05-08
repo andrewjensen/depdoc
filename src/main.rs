@@ -72,7 +72,7 @@ fn generate_graph(config_location: &str) -> Graph {
     let paths = get_source_paths(&config.path);
     println!("Found {} source files.", paths.len());
 
-    let nodes: Vec<Node> = paths
+    let internal_nodes: Vec<Node> = paths
         .iter()
         .map(|path| {
             let file_name = path.file_name().unwrap().to_str().unwrap();
@@ -87,14 +87,16 @@ fn generate_graph(config_location: &str) -> Graph {
         })
         .collect();
 
-    let nodes_by_path: HashMap<String, &Node> = nodes
+    let nodes_by_path: HashMap<String, &Node> = internal_nodes
         .iter()
         .map(|node| (node.path_relative.clone(), node))
         .collect();
 
+    let mut external_nodes_by_name: HashMap<String, Node> = HashMap::new();
+
     println!("Extracting imports from files...");
     let mut edges: Vec<Edge> = vec![];
-    for node in nodes.iter() {
+    for node in internal_nodes.iter() {
         println!("  Parsing file: {:?}", node.path_relative);
         let contents = fs::read_to_string(&node.path_absolute).unwrap();
         let unresolved_imports = extract_imports(&contents);
@@ -104,23 +106,45 @@ fn generate_graph(config_location: &str) -> Graph {
             .map(|import| resolve_import(import, &node, &nodes_by_path, &config.module_resolution))
             .collect();
 
+        for resolved_import in &resolved_imports {
+            match resolved_import {
+                ResolvedImport::InternalImport {
+                    target_path: _,
+                    target_node_id: _,
+                } => {}
+                ResolvedImport::ExternalImport { target_module_name } => {
+                    if !external_nodes_by_name.contains_key(target_module_name) {
+                        let external_node = Node {
+                            id: Uuid::new_v4().to_string(),
+                            node_type: NodeType::External,
+                            label: target_module_name.clone(),
+                            path_absolute: "".to_string(), // TODO: yucky type hack
+                            path_relative: "".to_string(),
+                        };
+                        external_nodes_by_name.insert(target_module_name.clone(), external_node);
+                    }
+                }
+            }
+        }
+
         let import_edges: Vec<Edge> = resolved_imports
             .iter()
-            .filter_map(|import| {
-                match import {
-                    ResolvedImport::InternalImport {
-                        target_path: _,
-                        target_node_id,
-                    } => Some(Edge {
+            .map(|import| match import {
+                ResolvedImport::InternalImport {
+                    target_path: _,
+                    target_node_id,
+                } => Edge {
+                    id: Uuid::new_v4().to_string(),
+                    source_id: node.id.clone(),
+                    target_id: target_node_id.clone(),
+                },
+                ResolvedImport::ExternalImport { target_module_name } => {
+                    let related_external_node =
+                        external_nodes_by_name.get(target_module_name).unwrap();
+                    Edge {
                         id: Uuid::new_v4().to_string(),
                         source_id: node.id.clone(),
-                        target_id: target_node_id.clone(),
-                    }),
-                    ResolvedImport::ExternalImport {
-                        target_module_name: _,
-                    } => {
-                        // TODO: create edges for external imports
-                        None
+                        target_id: related_external_node.id.clone(),
                     }
                 }
             })
@@ -129,9 +153,18 @@ fn generate_graph(config_location: &str) -> Graph {
     }
     println!("Found {} edges between modules.", edges.len());
 
+    println!(
+        "Added {} extra nodes for external modules.",
+        external_nodes_by_name.len()
+    );
+
+    let mut combined_nodes: Vec<Node> = vec![];
+    combined_nodes.extend(internal_nodes.clone());
+    combined_nodes.extend(external_nodes_by_name.values().cloned());
+
     let graph = Graph {
         title: config.title,
-        nodes,
+        nodes: combined_nodes,
         edges,
     };
 

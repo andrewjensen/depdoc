@@ -7,7 +7,7 @@ pub struct Graph {
     pub edges: Vec<Edge>,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Clone)]
 pub struct Node {
     pub id: String,
     pub node_type: NodeType,
@@ -16,7 +16,7 @@ pub struct Node {
     pub path_relative: String,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Clone)]
 pub enum NodeType {
     Internal,
     External,
