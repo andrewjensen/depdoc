@@ -6,7 +6,7 @@ export type Graph = {
 
 export type NodeMeta = {
   id: string;
-  node_type: string;
+  node_type: "INTERNAL" | "EXTERNAL";
   label: string;
   path_absolute: string;
   path_relative: string;

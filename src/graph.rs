@@ -27,7 +27,10 @@ pub struct Node {
 
 #[derive(Serialize, Clone)]
 pub enum NodeType {
+    #[serde(rename = "INTERNAL")]
     Internal,
+
+    #[serde(rename = "EXTERNAL")]
     External,
 }
 

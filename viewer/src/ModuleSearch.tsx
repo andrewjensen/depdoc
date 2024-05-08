@@ -15,8 +15,11 @@ export default function ModuleSearch() {
       setResults([]);
     } else {
       const lowercaseSearchTerm = e.target.value.toLowerCase();
-      const searchResults = nodes.filter((node) =>
-        node.path_relative.toLowerCase().includes(lowercaseSearchTerm),
+      const searchResults = nodes.filter(
+        (node) =>
+          node.path_relative.toLowerCase().includes(lowercaseSearchTerm) ||
+          (node.node_type === "EXTERNAL" &&
+            node.label.toLowerCase().includes(lowercaseSearchTerm)),
       );
       setResults(searchResults);
     }
@@ -49,7 +52,9 @@ export default function ModuleSearch() {
                 className="py-2 px-2 hover:bg-gray-50 cursor-pointer"
                 onClick={() => handleSelectNode(result.id)}
               >
-                {result.path_relative}
+                {result.node_type === "INTERNAL"
+                  ? result.path_relative
+                  : result.label}
               </li>
             ))}
           </ul>
