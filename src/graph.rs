@@ -50,12 +50,11 @@ pub fn generate_graph(config_location: &str) -> Graph {
     let internal_nodes: Vec<Node> = paths
         .iter()
         .map(|path| {
-            let file_name = path.file_name().unwrap().to_str().unwrap();
             let path_relative = path.strip_prefix(&config.path).unwrap().to_str().unwrap();
             Node {
                 id: Uuid::new_v4().to_string(),
                 node_type: NodeType::Internal,
-                label: file_name.to_string(),
+                label: get_node_label(path_relative),
                 path_absolute: path.to_str().unwrap().to_string(),
                 path_relative: path_relative.to_string(),
             }
@@ -175,4 +174,60 @@ fn get_paths(root_directory: &str, file_extension: &str) -> Vec<PathBuf> {
 fn contains_node_modules(path: &PathBuf) -> bool {
     path.iter()
         .any(|component| component == "node_modules" || component == "build")
+}
+
+pub fn get_node_label(path_relative: &str) -> String {
+    let path = PathBuf::from(path_relative);
+
+    let file_stem = path.file_stem().unwrap().to_str().unwrap();
+    let file_name = path.file_name().unwrap().to_str().unwrap();
+
+    if file_stem == "index"
+        && path.parent().is_some()
+        && path.parent().unwrap().file_name().is_some()
+    {
+        let parent_dir_name = path
+            .parent()
+            .unwrap()
+            .file_name()
+            .unwrap()
+            .to_str()
+            .unwrap();
+        format!("{}/{}", parent_dir_name, file_name)
+    } else {
+        file_name.to_string()
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn test_get_node_label_root_index() {
+        let path = "index.ts";
+        let label = get_node_label(path);
+        assert_eq!(label, "index.ts");
+    }
+
+    #[test]
+    fn test_get_node_label_src_index() {
+        let path = "src/index.ts";
+        let label = get_node_label(path);
+        assert_eq!(label, "src/index.ts");
+    }
+
+    #[test]
+    fn test_get_node_label_standard() {
+        let path = "src/components/MyComponent.jsx";
+        let label = get_node_label(path);
+        assert_eq!(label, "MyComponent.jsx");
+    }
+
+    #[test]
+    fn test_get_node_label_index() {
+        let path = "src/SomeContext/index.ts";
+        let label = get_node_label(path);
+        assert_eq!(label, "SomeContext/index.ts");
+    }
 }
