@@ -1,39 +1,39 @@
 import React from "react";
 import { Handle, Position, NodeProps } from "reactflow";
 import { NodeMeta } from "./types";
+import { useViewerStore } from "./viewerStore";
 
-// TODO: finish implementing
-const SHOW_EXPANDERS = false;
+export default function InternalModuleNode({ id, data }: NodeProps<NodeMeta>) {
+  const selectedNodeId = useViewerStore((state) => state.selectedNodeId);
+  const setSelectedNodeId = useViewerStore((state) => state.setSelectedNodeId);
 
-export default function InternalModuleNode({ data }: NodeProps<NodeMeta>) {
-  const handleExpandUp = () => {
-    console.log("expand up");
+  const handleToggleMenuButton = () => {
+    if (id === selectedNodeId) {
+      setSelectedNodeId(null);
+    } else {
+      setSelectedNodeId(id);
+    }
   };
 
-  const handleExpandDown = () => {
-    console.log("expand down");
+  const handleExpandUpstream = () => {
+    console.log("TODO: expand upstream");
+  };
+
+  const handleExpandDownstream = () => {
+    console.log("TODO: expand downstream");
   };
 
   return (
     <>
       <Handle type="target" position={Position.Left} className="ml-[2px]" />
-      <div className="bg-white px-8 py-4 rounded border border-black">
+      <div className="bg-white px-8 py-4 rounded-lg border border-black">
         <p className="text-xl text-black">{data.label}</p>
-        {SHOW_EXPANDERS && (
-          <>
-            <ExpanderBadge
-              position="left"
-              label="+"
-              tooltip="Expand all dependent modules"
-              onClick={handleExpandUp}
-            />
-            <ExpanderBadge
-              position="right"
-              label="+"
-              tooltip="Expand all dependencies"
-              onClick={handleExpandDown}
-            />
-          </>
+        <MenuButton onToggle={handleToggleMenuButton} />
+        {id === selectedNodeId && (
+          <Menu
+            onExpandUpstream={handleExpandUpstream}
+            onExpandDownstream={handleExpandDownstream}
+          />
         )}
       </div>
       <Handle type="source" position={Position.Right} className="mr-[2px]" />
@@ -41,43 +41,41 @@ export default function InternalModuleNode({ data }: NodeProps<NodeMeta>) {
   );
 }
 
-type ExpanderBadgeProps = {
-  position: "left" | "right";
-  label: string;
-  tooltip: string;
-  onClick: () => void;
+type MenuButtonProps = {
+  onToggle: () => void;
 };
 
-function ExpanderBadge({
-  position,
-  label,
-  tooltip,
-  onClick,
-}: ExpanderBadgeProps) {
-  const classes = [
-    "absolute",
-    "bg-gray-500",
-    "cursor-pointer",
-    "h-[20px]",
-    "hover:bg-gray-700",
-    "inline",
-    "pt-[3px]",
-    "rounded-[999px]",
-    "text-center",
-    "text-white",
-    "text-xs",
-    "top-[-8px]",
-    "w-[20px]",
-  ];
-  if (position === "left") {
-    classes.push("left-[-10px]");
-  } else {
-    classes.push("right-[-10px]");
-  }
-
+function MenuButton({ onToggle }: MenuButtonProps) {
   return (
-    <div className={classes.join(" ")} title={tooltip} onClick={onClick}>
-      {label}
+    <div
+      className="absolute right-1 top-1 bg-white w-6 h-6 rounded border border-1 border-white text-center text-gray-400 hover:bg-gray-100 hover:border-gray-500 hover:text-gray-800"
+      onClick={onToggle}
+    >
+      <span className="block my-[-3px]">...</span>
+    </div>
+  );
+}
+
+type MenuProps = {
+  onExpandUpstream: () => void;
+  onExpandDownstream: () => void;
+};
+
+function Menu({ onExpandUpstream, onExpandDownstream }: MenuProps) {
+  return (
+    <div className="absolute top-0 right-[-244px] w-[240px] bg-white border border-gray-400 border-1 text-sm z-50 py-2 rounded-lg cursor-default">
+      <p
+        className="py-1 px-4 hover:bg-gray-100 cursor-pointer"
+        onClick={onExpandUpstream}
+      >
+        Expand upstream
+      </p>
+      <p
+        className="py-1 px-4 hover:bg-gray-100 cursor-pointer"
+        onClick={onExpandDownstream}
+      >
+        Expand downstream
+      </p>
     </div>
   );
 }

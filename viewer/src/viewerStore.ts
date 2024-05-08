@@ -8,10 +8,12 @@ export type ViewerState = {
   completeGraph: Graph;
   visibleNodes: Node[];
   visibleEdges: Edge[];
+  selectedNodeId: string | null;
 
   setGraphData: (graph: Graph) => void;
   addNode: (id: string) => void;
   dragNode: (id: string, position: XYPosition) => void;
+  setSelectedNodeId: (id: string | null) => void;
 };
 
 export const useViewerStore = create<ViewerState>()(
@@ -19,6 +21,8 @@ export const useViewerStore = create<ViewerState>()(
     completeGraph: { title: "", nodes: [], edges: [] },
     visibleNodes: [],
     visibleEdges: [],
+    selectedNodeId: null,
+
     setGraphData: (graph: Graph) => {
       set({
         completeGraph: graph,
@@ -94,6 +98,9 @@ export const useViewerStore = create<ViewerState>()(
           ),
         };
       });
+    },
+    setSelectedNodeId: (id: string | null) => {
+      set({ selectedNodeId: id });
     },
   })),
 );
