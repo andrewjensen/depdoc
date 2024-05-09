@@ -4,7 +4,9 @@
   "description": "",
   "scripts": {
     "start": "npx parcel src/index.html",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "npx parcel build src/index.html",
+    "clean": "rm -rf dist/"
   },
   "author": "",
   "license": "MIT",
