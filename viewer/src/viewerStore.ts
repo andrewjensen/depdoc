@@ -12,9 +12,14 @@ export type ViewerState = {
 
   setGraphData: (graph: Graph) => void;
   addNode: (id: string) => void;
+  expandUpstream: (nodeId: string) => void;
   dragNode: (id: string, position: XYPosition) => void;
   setSelectedNodeId: (id: string | null) => void;
 };
+
+const DEFAULT_NODE_POSITION = { x: 20, y: 20 };
+const DEFAULT_SPACING_X = 300;
+const DEFAULT_SPACING_Y = 80;
 
 export const useViewerStore = create<ViewerState>()(
   devtools((set) => ({
@@ -87,6 +92,68 @@ export const useViewerStore = create<ViewerState>()(
         };
       });
     },
+    expandUpstream: (nodeId: string) =>
+      set((state: ViewerState) => {
+        const currentNode = state.visibleNodes.find(
+          (node) => node.id === nodeId,
+        );
+        if (!currentNode) {
+          throw new Error("Could not find node");
+        }
+
+        // Get all nodes upstream of `nodeId`
+        // Filter out any nodes that are already visible
+        // Make each node into a visible node
+        const missingUpstreamNodes = state.completeGraph.edges
+          .filter(
+            (edge) =>
+              edge.target_id === nodeId &&
+              !state.visibleNodes.some((node) => node.id === edge.source_id),
+          )
+          .map((edge) =>
+            state.completeGraph.nodes.find(
+              (node) => node.id === edge.source_id,
+            ),
+          )
+          .filter((maybeNode) => maybeNode !== undefined) as NodeMeta[];
+        missingUpstreamNodes.sort((a, b) => a.label.localeCompare(b.label));
+
+        // Create visible nodes, arranged vertically
+        const offsetY = currentNode.position.y;
+        const addedVisibleNodes = missingUpstreamNodes.map((node, idx) => {
+          const position: XYPosition = {
+            x: currentNode.position.x - DEFAULT_SPACING_X,
+            y: offsetY + idx * DEFAULT_SPACING_Y,
+          };
+          return makeVisibleNode(node, position);
+        });
+
+        // Get every visible node
+        // get every edge that involves those
+        // take the ones that aren't already visible
+        //
+        // TODO: extract into function, it's the same logic as above
+        const visibleNodesSet = new Set([
+          ...state.visibleNodes.map((node) => node.id),
+          ...addedVisibleNodes.map((node) => node.id),
+        ]);
+        const visibleEdgesSet = new Set(
+          state.visibleEdges.map((edge) => edge.id),
+        );
+        const addedEdges = state.completeGraph.edges.filter(
+          (edge) =>
+            !visibleEdgesSet.has(edge.id) &&
+            (visibleNodesSet.has(edge.source_id) ||
+              visibleNodesSet.has(edge.target_id)),
+        );
+
+        const addedVisibleEdges = addedEdges.map(makeVisibleEdge);
+
+        return {
+          visibleNodes: [...state.visibleNodes, ...addedVisibleNodes],
+          visibleEdges: [...state.visibleEdges, ...addedVisibleEdges],
+        };
+      }),
     dragNode: (id: string, position: XYPosition) => {
       set((state: ViewerState) => {
         const foundNode = state.visibleNodes.find((node) => node.id === id);
@@ -105,14 +172,14 @@ export const useViewerStore = create<ViewerState>()(
   })),
 );
 
-function makeVisibleNode(nodeMeta: NodeMeta): Node {
+function makeVisibleNode(
+  nodeMeta: NodeMeta,
+  position: XYPosition = DEFAULT_NODE_POSITION,
+): Node {
   return {
     id: nodeMeta.id,
     type: "internalModule",
-    position: {
-      x: 20,
-      y: 20,
-    },
+    position,
     data: { label: nodeMeta.label },
     sourcePosition: Position.Right,
     targetPosition: Position.Left,

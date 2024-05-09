@@ -6,6 +6,7 @@ import { useViewerStore } from "./viewerStore";
 export default function InternalModuleNode({ id, data }: NodeProps<NodeMeta>) {
   const selectedNodeId = useViewerStore((state) => state.selectedNodeId);
   const setSelectedNodeId = useViewerStore((state) => state.setSelectedNodeId);
+  const expandUpstream = useViewerStore((state) => state.expandUpstream);
 
   const handleToggleMenuButton = () => {
     if (id === selectedNodeId) {
@@ -16,7 +17,7 @@ export default function InternalModuleNode({ id, data }: NodeProps<NodeMeta>) {
   };
 
   const handleExpandUpstream = () => {
-    console.log("TODO: expand upstream");
+    expandUpstream(id);
   };
 
   const handleExpandDownstream = () => {
