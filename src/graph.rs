@@ -176,7 +176,7 @@ fn get_paths(root_directory: &str, file_extension: &str) -> Vec<PathBuf> {
 
 fn contains_node_modules(path: &PathBuf) -> bool {
     path.iter()
-        .any(|component| component == "node_modules" || component == "build")
+        .any(|component| component == "node_modules" || component == "build" || component == "dist")
 }
 
 pub fn get_node_label(path_relative: &str) -> String {
